@@ -10,6 +10,7 @@ class ChatController < ApplicationController
     if Topic.exists?(:key => "#{gid}") and $redistopic.exists(gid)
       session[:group_id] = gid
       @title = $redistopic.hget(gid,"title")
+      @visitor = $visitor.scard(gid) + 1
       talks = $rediscont.lrange gid, 0,-1
       cont = []
       num = 0
@@ -18,6 +19,7 @@ class ChatController < ApplicationController
         cont[num] = msg
         num = num + 1
       end
+
       gon.list = cont
     else 
       render :text => "そんなのないよ", :status => 404

@@ -34,8 +34,12 @@ class Output
   console.log message
   # 受け取ったデータをappend
   tbutton = treeb
-  messagebody = @mescape(message.body,resnum)
+  messagebody = @mescape(message.body,resnum,message.comment_id)
   #共通部品
+  #本文アンカーが自分のレスに対してなら
+  if messagebody[2] is 1
+    resforme = 1
+
   if(newpost is "on")
     newlabel = "<span class='label label-warning' id='newlabel#{resnum}'>New</span>"
   else
@@ -68,7 +72,7 @@ class Output
 
 
   resnumAtime   = "<div class='head'><div class='anker'>
-                   <a  name='ank#{message.comment_id}'>#{resnum}</a>
+                   <a class='anker'  name='ank#{message.comment_id}'>#{resnum}</a>
                    <span class='badge' data-content='' data-title='#{resnum}への返信' id='rec#{message.comment_id}'></span>
                    </div>
                    <small> #{message.time}</small> #{newlabel} #{hyou}"
@@ -230,12 +234,38 @@ class Output
  price: () ->
  #エスケープ処理
  mescape: (mbody,mnum) ->
-    mbb =  mbody.replace(/&/g, "&amp;")
-                .replace(/"/g, "&quot;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/\r\n/g, "<br />")
-                .replace(/(\n|\r)/g, "<br />")
+    if mbody.match(/>>\d{1,3}/)
+      resmecom = mbody.match(/>>(\d{1,3})/)
+      if resmecom[1] < mnum
+       resmename = $("a.anker:contains(#{resmecom[1]})").attr "name"
+       resmeid = resmename.substr(3)
+       resmeclass = $("div##{resmeid}").attr "class"
+       if resmeclass.match(/blue/)
+         resme = 1
+       else
+         resme = 0
+      mbb =  mbody.replace(/&/g, "&amp;")
+                  .replace(/"/g, "&quot;")
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;")
+                  .replace(/\r\n/g, "<br />")
+                  .replace(/(\n|\r)/g, "<br />")
+                  .replace(/&gt;&gt;(\d{1,3})/g, (match,p1,offset,string)->
+                    if p1 < mnum
+                     com = $("a.anker:contains(#{p1})").attr "name"
+                     comid = com.substr(3)
+                     ret = "<a class='resanker' name='#{comid}'>#{match}</a>"
+                    else
+                     ret = "&gt;&gt;#{p1}"
+                    return ret
+                    )
+    else
+      mbb =  mbody.replace(/&/g, "&amp;")
+                  .replace(/"/g, "&quot;")
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;")
+                  .replace(/\r\n/g, "<br />")
+                  .replace(/(\n|\r)/g, "<br />")
 
     reg1 = /http[s]?\:\/\/[\w\+\$\;\?\.\%\,\!\#\~\*\/\:\@\&\\\=\_\-]+(gifv|webm)/g
     reg2 = /http[s]?\:\/\/[\w\+\$\;\?\.\%\,\!\#\~\*\/\:\@\&\\\=\_\-]+(jpg|jpeg|gif|png|bmp)/g
@@ -251,7 +281,8 @@ class Output
     if(pic isnt true and pic2 isnt true and pic3 isnt true)
       mba3 = mbb.replace(/(http(s)?:\/\/([\w-]+\.)+[\w-]+(\/[\w- .\/?%&=]*)?)/,"<a href='$1'>$1</a>")
     mba2 = 3
-    return [mba3,mba2]
+    return [mba3,mba2,resme]
+ 
 
  #返信数とツールチップ用関数 
  resinc: (incnum,mbody,mnum,mtime,resid,onlyforme) ->
@@ -329,6 +360,24 @@ class ChatClass
 # サーバーからnew_messageを受け取ったらreceiveMessageを実行
   @channel.bind 'websocket_chat', @receiveMessage
   @dispatcher.bind 'websocket_chat', @receiveMessage
+  @channel.bind 'leave',@leave
+  @channel.bind 'in',@in
+ 
+ leave: (m) =>
+  num = $("span#visitor-num").text()
+  num = num - 1
+  $("span#visitor-num").text(num)
+  
+ in: (m) =>
+  terget = $("div#visit-c")
+  beforeclass = target.attr "class"
+  target.attr class: "#{beforeclass} visitor-come"
+  num = $("span#visitor-num").text()
+  num = num + 1
+  $("span#visitor-num").text(num)
+  setTimeout ->
+    target.attr class: "#{beforeclass}"
+  ,3000
 
  sendMessage: (event) =>
 # サーバ側にsend_messageのイベントを送信

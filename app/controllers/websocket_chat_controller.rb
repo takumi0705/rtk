@@ -12,6 +12,8 @@ class WebsocketChatController < WebsocketRails::BaseController
     puts "initialize"
     controller_store[:redis] = $rediscont
     controller_store[:topic] = $redistopic
+    controller_store[:visitor] = $visitor
+    puts "moi"
   end
 
   def connect_user
@@ -20,11 +22,12 @@ class WebsocketChatController < WebsocketRails::BaseController
       WebsocketRails["#{gid}"].filter_with(WebsocketChatController, :new_message)
     
     #入室数あげ
-    controller_store[:topic].hincrby(gid,"visitor", 1)
 
     logger.debug("connected user")
     msg = {}
     ipac = IPAddr.new("#{request.remote_ip}")
+    dip = ipac.to_i
+    controller_store[:visitor].sadd(gid,dip)
     dig = ipac.to_i * Time.zone.now.strftime("%d").to_i
     @client_ip = Digest::SHA1.hexdigest(dig.to_s).to_i(16).to_s(36)
     msg["first_id"] = @client_ip 
@@ -61,7 +64,10 @@ class WebsocketChatController < WebsocketRails::BaseController
   def exit
     logger.debug("disconnected user")
     gid = session[:group_id]
-    controller_store[:topic].hincrby(gid,"visitor", -1)
+    ipac = IPAddr.new("#{request.remote_ip}")
+    dip = ipac.to_i
+    controller_store[:visitor].srem(gid,dip)
+    WebsocketRails["#{gid}"].trigger(:leave,"1")
   end
 
   private

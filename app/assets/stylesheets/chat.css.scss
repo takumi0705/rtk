@@ -35,8 +35,6 @@ p.word{
 .anker{
   font-size:18px;
   display:inline-block;
-
-
 }
 
 .tpad{
@@ -394,4 +392,27 @@ div.reform-m{
   height:5px;
   position:fixed;
   bottom:0px;
+}
+
+//訪問者カウンター
+div.visitor-mobile{
+  opacity:0.333;
+  position:fixed;
+  top:60px;
+  right:15px;
+  font-size:1em;
+}
+
+div.visitor{
+  opacity:0.333;
+  position:fixed;
+  top:60px;
+  right:25px;
+  font-size:1.5em;
+}
+
+.visitor-come{
+  opacity:1;
+  color:#e53935;
+
 }

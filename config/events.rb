@@ -9,6 +9,11 @@ WebsocketRails::EventMap.describe do
   
   subscribe :websocket_chat, to: WebsocketChatController,
   with_method: :new_message
- 
+
+  subscribe :leave, to: WebsocketChatController,
+  with_method: :leave
+
+  subscribe :in, to: WebsocketChatController,
+  with_method: :in
 end
 
